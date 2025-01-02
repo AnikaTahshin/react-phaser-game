@@ -50,16 +50,24 @@
         }
 
         var platforms;
+        var score = 0;
+        var scoreText;
+        var gameOver = false
+
 
         function create() {
             const sky = this.add.image(0, 0, 'sky');
+
             sky.setOrigin(0, 0);
+            scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+
 
 
             createPlatforms.call(this);
             createPlayer.call(this);
             createCursor.call(this);
             createStars.call(this);
+            createBombs.call(this);
 
             const helloButton = this.add.text(200, 300, buttonConfig.buttonText, buttonConfig.buttonStyle);
             helloButton.setInteractive().on('pointerdown', () => {
@@ -129,9 +137,53 @@
 
             });
             this.physics.add.collider(this.stars, this.platforms);
+            this.physics.add.overlap(this.player, this.stars, collectStar, null, this);
 
 
 
+
+        }
+
+
+        function createBombs() {
+            this.bombs = this.physics.add.group();
+
+            this.physics.add.collider(this.bombs, this.platforms);
+
+            this.physics.add.collider(this.player, this.bombs, hitBomb, null, this);
+        }
+
+        function hitBomb(player, bomb) {
+            this.physics.pause();
+
+            player.setTint(0xff0000);
+
+            player.anims.play('turn');
+
+            gameOver = true;
+        }
+
+        function collectStar(player, star) {
+            star.disableBody(true, true);
+
+            score += 10;
+            scoreText.setText('Score: ' + score);
+
+            if (this.stars.countActive(true) === 0) {
+                this.stars.children.iterate(function (child) {
+
+                    child.enableBody(true, child.x, 0, true, true);
+
+                });
+
+                const x = (this.player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+
+                const bomb = this.bombs.create(x, 16, 'bomb');
+                bomb.setBounce(1);
+                bomb.setCollideWorldBounds(true);
+                bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+
+            }
         }
         function update() {
             if (this.cursors.left.isDown) {
