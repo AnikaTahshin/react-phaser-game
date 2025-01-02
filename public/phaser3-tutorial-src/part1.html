@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Making your first Phaser 3 Game - Part 1</title>
+    <title>Phaser 3 Game - Start and Restart</title>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
     <style type="text/css">
         body {
@@ -15,9 +15,11 @@
 <body>
 
     <script type="module">
-        import { buttonConfig } from '../../config/button-config.js';
+        let game;
+        let score = 0;
+        let gameOver = false;
 
-        var config = {
+        const config = {
             type: Phaser.AUTO,
             width: 800,
             height: 600,
@@ -29,71 +31,84 @@
                 }
             },
             scene: {
-                preload: preload,
-                create: create,
-                update: update
+                preload,
+                create,
+                update
             }
         };
 
-        var game = new Phaser.Game(config);
+        // ======================
+        // PRELOAD FUNCTION
 
         function preload() {
-
             this.load.image('sky', './assets/sky.png');
             this.load.image('ground', './assets/platform.png');
             this.load.image('star', './assets/star.png');
             this.load.image('bomb', './assets/bomb.png');
-            this.load.spritesheet('dude',
-                'assets/dude.png',
-                { frameWidth: 32, frameHeight: 48 }
-            );
+            this.load.spritesheet('dude', './assets/dude.png', { frameWidth: 32, frameHeight: 48 });
         }
-
-        var platforms;
-        var score = 0;
-        var scoreText;
-        var gameOver = false
-
-
+        // =============================
+        // CREATE FUNCTION
         function create() {
-            const sky = this.add.image(0, 0, 'sky');
+            this.add.image(0, 0, 'sky').setOrigin(0, 0);
 
-            sky.setOrigin(0, 0);
-            scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+            this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
+            this.scoreText.visible = false;
 
+            this.gameOverText = this.add.text(400, 300, 'Game Over!', {
+                fontSize: '64px',
+                fill: '#000',
+                align: 'center'
+            });
+            this.gameOverText.setOrigin(0.5);
+            this.gameOverText.visible = false;
+
+            // START BUTTON TO PLAY THE GAME
+
+            this.startButton = this.add.text(400, 400, 'Start Game', {
+                fontSize: '32px',
+                fill: '#fff',
+                backgroundColor: '#000',
+                padding: { left: 20, right: 20, top: 10, bottom: 10 }
+            }).setInteractive();
+            this.startButton.setOrigin(0.5);
+            this.startButton.on('pointerdown', () => startGame.call(this));
+
+            this.cursors = this.input.keyboard.createCursorKeys();
+        }
+        // ==================================
+        // GAME START
+        function startGame() {
+            score = 0;
+            gameOver = false;
+
+            this.startButton.visible = false;
+            this.gameOverText.visible = false;
+            this.scoreText.visible = true;
+            this.scoreText.setText('Score: 0');
 
 
             createPlatforms.call(this);
             createPlayer.call(this);
-            createCursor.call(this);
             createStars.call(this);
             createBombs.call(this);
-
-            const helloButton = this.add.text(200, 300, buttonConfig.buttonText, buttonConfig.buttonStyle);
-            helloButton.setInteractive().on('pointerdown', () => {
-                console.log('Button clicked!');
-            });
         }
-
-
+        // =========================
+        // PLATFORM CREATE
         function createPlatforms() {
             this.platforms = this.physics.add.staticGroup();
-
             this.platforms.create(400, 568, 'ground').setScale(2).refreshBody();
-
             this.platforms.create(600, 400, 'ground');
             this.platforms.create(50, 250, 'ground');
             this.platforms.create(750, 220, 'ground');
-
         }
-
+        // ====================================
+        // CREATE PLAYER
         function createPlayer() {
             this.player = this.physics.add.sprite(100, 450, 'dude');
-
             this.player.setBounce(0.2);
             this.player.setCollideWorldBounds(true);
             this.physics.add.collider(this.player, this.platforms);
-
 
             this.anims.create({
                 key: 'left',
@@ -115,15 +130,8 @@
                 repeat: -1
             });
         }
-
-        function createCursor() {
-            this.cursors = this.input.keyboard.createCursorKeys();
-
-
-
-        }
-
-
+        // ==============================
+        // CREATE PLAYER
         function createStars() {
             this.stars = this.physics.add.group({
                 key: 'star',
@@ -131,74 +139,75 @@
                 setXY: { x: 12, y: 0, stepX: 70 }
             });
 
-            this.stars.children.iterate((child) => {
-
+            this.stars.children.iterate(child => {
                 child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-
             });
+
             this.physics.add.collider(this.stars, this.platforms);
             this.physics.add.overlap(this.player, this.stars, collectStar, null, this);
-
-
-
-
         }
 
 
+        // ============================
+        // CREATE BOMBS
         function createBombs() {
             this.bombs = this.physics.add.group();
-
             this.physics.add.collider(this.bombs, this.platforms);
-
             this.physics.add.collider(this.player, this.bombs, hitBomb, null, this);
         }
-
-        function hitBomb(player, bomb) {
-            this.physics.pause();
-
-            player.setTint(0xff0000);
-
-            player.anims.play('turn');
-
-            gameOver = true;
-        }
-
+        // =============================
+        // COLLECT STARS
         function collectStar(player, star) {
             star.disableBody(true, true);
-
             score += 10;
-            scoreText.setText('Score: ' + score);
+            this.scoreText.setText('Score: ' + score);
 
             if (this.stars.countActive(true) === 0) {
-                this.stars.children.iterate(function (child) {
-
+                this.stars.children.iterate(child => {
                     child.enableBody(true, child.x, 0, true, true);
-
                 });
 
-                const x = (this.player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
-
+                const x = this.player.x < 400 ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
                 const bomb = this.bombs.create(x, 16, 'bomb');
                 bomb.setBounce(1);
                 bomb.setCollideWorldBounds(true);
                 bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
-
             }
         }
+        // =======================
+        // HIT BOMB
+        function hitBomb(player, bomb) {
+            this.physics.pause();
+            player.setTint(0xff0000);
+            player.anims.play('turn');
+            gameOver = true;
+
+            this.gameOverText.visible = true;
+
+            setTimeout(() => {
+                this.startButton.visible = true;
+
+                // RESTART THE GAME 
+                this.registry.destroy();
+                this.events.off();
+                this.scene.restart()
+            }, 1000);
+
+
+        }
+        // ========================
+        // UPDATE
         function update() {
+            if (gameOver || !this.player) return;
+
             if (this.cursors.left.isDown) {
                 this.player.setVelocityX(-160);
-
                 this.player.anims.play('left', true);
-            }
-            else if (this.cursors.right.isDown) {
+            } else if (this.cursors.right.isDown) {
                 this.player.setVelocityX(160);
-
                 this.player.anims.play('right', true);
-            }
-            else {
+            } else {
                 this.player.setVelocityX(0);
-
                 this.player.anims.play('turn');
             }
 
@@ -207,6 +216,9 @@
             }
         }
 
+        window.onload = () => {
+            game = new Phaser.Game(config);
+        };
     </script>
 
 </body>

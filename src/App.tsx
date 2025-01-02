@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame";
+import { IRefPhaserGame, PhaserGame } from "./game/scenes/PhaserGame";
 import { MainMenu } from "./game/scenes/MainMenu";
 
 function App() {
@@ -33,7 +33,7 @@ function App() {
         }
     };
 
-    const addSprite = () => {
+    const   addSprite = () => {
         if (phaserRef.current) {
             const scene = phaserRef.current.scene;
 
