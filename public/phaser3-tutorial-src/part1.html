@@ -3,26 +3,33 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Phaser 3 Game - Start and Restart</title>
+    <title>Phaser Game</title>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
     <style type="text/css">
         body {
-            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
     </style>
 </head>
 
 <body>
 
+
     <script type="module">
+        import { buttonConfig } from '../../config/button-config.js';
+
         let game;
         let score = 0;
         let gameOver = false;
 
         const config = {
             type: Phaser.AUTO,
+
             width: 800,
             height: 600,
+
             physics: {
                 default: 'arcade',
                 arcade: {
@@ -36,6 +43,7 @@
                 update
             }
         };
+
 
         // ======================
         // PRELOAD FUNCTION
@@ -64,13 +72,7 @@
             this.gameOverText.visible = false;
 
             // START BUTTON TO PLAY THE GAME
-
-            this.startButton = this.add.text(400, 400, 'Start Game', {
-                fontSize: '32px',
-                fill: '#fff',
-                backgroundColor: '#000',
-                padding: { left: 20, right: 20, top: 10, bottom: 10 }
-            }).setInteractive();
+            this.startButton = this.add.text(350, 300, buttonConfig.buttonText, buttonConfig.buttonStyle).setInteractive();
             this.startButton.setOrigin(0.5);
             this.startButton.on('pointerdown', () => startGame.call(this));
 
